@@ -2,42 +2,40 @@
 #define BOOKING_H
 
 #include <string>
-#include "Passenger.h"
+#include <vector>
+#include "Ticket.h"
 
 class Booking {
 private:
     std::string pnr;
     int trainNumber;
-    int CoachNumber;
-    Passenger passenger;
-
-    int seatNumber;
-    double fare;
     std::string journeyDate;
     std::string status;
 
-public:
-    Booking(std::string pnr,
-            int trainNumber,
-            int CoachNumber,
-            Passenger passenger,
-            int seatNumber,
-            double fare,
-            std::string journeyDate);
+    std::vector<Ticket> tickets;
 
-    void display() const;
+public:
+    Booking(
+        const std::string& pnr,
+        int trainNumber,
+        const std::string& journeyDate
+    );
+
+    void addTicket(const Ticket& ticket);
+
+    const std::string& getPNR() const;
+    int getTrainNumber() const;
+    const std::string& getJourneyDate() const;
+    const std::string& getStatus() const;
+
+    const std::vector<Ticket>& getTickets() const;
+
+    int getTotalPassengers() const;
+    double getTotalFare() const;
+
     void cancel();
 
-    std::string getPNR() const;
-    int getTrainNumber() const;
-    int getCoachNumber() const;
-    int getSeatNumber() const;
-    double getFare() const;
-    std::string getJourneyDate() const;
-    std::string getStatus() const;
-    
-    const Passenger& getPassenger() const;
-
+    void display() const;
 };
 
 #endif

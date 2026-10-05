@@ -3,43 +3,24 @@
 
 using namespace std;
 
-Booking::Booking(string pnr,
-                 int trainNumber,
-                 int CoachNumber,
-                 Passenger passenger,
-                 int seatNumber,
-                 double fare,
-                string journeyDate)
+Booking::Booking(
+    const string& pnr,
+    int trainNumber,
+    const string& journeyDate
+)
     : pnr(pnr),
       trainNumber(trainNumber),
-      CoachNumber(CoachNumber),
-      passenger(passenger),
-      seatNumber(seatNumber),
-      fare(fare),
-      journeyDate(journeyDate)
-{
-    status = "Confirmed";
+      journeyDate(journeyDate),
+      status("Confirmed") {
 }
 
-void Booking::display() const {
-
-    cout << "\n========== BOOKING DETAILS ==========\n";
-
-    cout << "PNR          : " << pnr << '\n';
-    cout << "Train Number : " << trainNumber << '\n';
-    cout << "Coach Number : " << CoachNumber << '\n';
-    cout << "Seat Number  : " << seatNumber << '\n';
-    cout << "Journey Date : " << journeyDate << '\n';
-    cout << "Fare         : ₹" << fare << '\n';
-    cout << "Status       : " << status << '\n';
-
-    cout << "\nPassenger Details:\n";
-    passenger.display();
-
-    cout << "=====================================\n";
+void Booking::addTicket(const Ticket& ticket) {
+    if (tickets.size() < 5) {
+        tickets.push_back(ticket);
+    }
 }
 
-string Booking::getPNR() const {
+const string& Booking::getPNR() const {
     return pnr;
 }
 
@@ -47,30 +28,64 @@ int Booking::getTrainNumber() const {
     return trainNumber;
 }
 
-int Booking::getCoachNumber() const {
-    return CoachNumber;
+const string& Booking::getJourneyDate() const {
+    return journeyDate;
 }
 
-int Booking::getSeatNumber() const {
-    return seatNumber;
-}
-
-double Booking::getFare() const {
-    return fare;
-}
-
-string Booking::getStatus() const {
+const string& Booking::getStatus() const {
     return status;
+}
+
+const vector<Ticket>& Booking::getTickets() const {
+    return tickets;
+}
+
+int Booking::getTotalPassengers() const {
+    return static_cast<int>(tickets.size());
+}
+
+double Booking::getTotalFare() const {
+
+    double total = 0;
+
+    for (const Ticket& ticket : tickets) {
+        total += ticket.getFare();
+    }
+
+    return total;
 }
 
 void Booking::cancel() {
     status = "Cancelled";
 }
 
-string Booking::getJourneyDate() const {
-    return journeyDate;
-}
+void Booking::display() const {
 
-const Passenger& Booking::getPassenger() const {
-    return passenger;
+    cout << "\n========================================\n";
+    cout << "              BOOKING DETAILS\n";
+    cout << "========================================\n";
+
+    cout << "PNR            : " << pnr << '\n';
+    cout << "Train Number   : " << trainNumber << '\n';
+    cout << "Journey Date   : " << journeyDate << '\n';
+    cout << "Status         : " << status << '\n';
+    cout << "Passengers     : " << tickets.size() << '\n';
+
+    cout << "\n----------------------------------------\n";
+
+    int passengerNumber = 1;
+
+    for (const Ticket& ticket : tickets) {
+
+        cout << "\nPassenger " << passengerNumber << '\n';
+        cout << "----------------------------------------";
+
+        ticket.display();
+
+        passengerNumber++;
+    }
+
+    cout << "\n----------------------------------------\n";
+    cout << "Total Fare     : ₹" << getTotalFare() << '\n';
+    cout << "========================================\n";
 }

@@ -46,6 +46,8 @@ public:
     Coach* findCoach(int coachNumber);
 
     bool runsDaily() const;
+
+    const std::vector<Coach>& getCoaches() const;
 };
 
 #endif

@@ -2,60 +2,73 @@
 
 #include <fstream>
 #include <sstream>
+#include <iostream>
 
 using namespace std;
 
+
 bool FileManager::initializeFile(const string& filename) {
 
+    ifstream file(filename);
+
+    if (file.good()) {
+        return true;
+    }
+
+    ofstream newFile(filename);
+
+    return newFile.good();
+}
+
+
+bool FileManager::saveBooking(
+    const Booking& booking,
+    const string& filename
+) {
+
     ofstream file(filename, ios::app);
 
     if (!file.is_open()) {
         return false;
     }
 
-    file.close();
 
-    return true;
-}
+    file << booking.getPNR() << '|';
+    file << booking.getTrainNumber() << '|';
+    file << booking.getJourneyDate() << '|';
+    file << booking.getStatus() << '|';
+    file << booking.getTotalPassengers();
 
-bool FileManager::saveBooking(const Booking& booking,
-                              const string& filename) {
+    for (const Ticket& ticket : booking.getTickets()) {
 
-    ofstream file(filename, ios::app);
+        const Passenger& passenger = ticket.getPassenger();
 
-    if (!file.is_open()) {
-        return false;
+        file << '|'
+             << passenger.getName() << '|'
+             << passenger.getAge() << '|'
+             << passenger.getGender() << '|'
+             << passenger.getPhone() << '|'
+             << ticket.getCoachNumber() << '|'
+             << ticket.getSeatNumber() << '|'
+             << ticket.getFare();
     }
 
-    const Passenger& passenger = booking.getPassenger();
-
-    file << booking.getPNR() << '|'
-         << booking.getTrainNumber() << '|'
-         << booking.getCoachNumber() << '|'
-         << passenger.getName() << '|'
-         << passenger.getAge() << '|'
-         << passenger.getGender() << '|'
-         << passenger.getPhone() << '|'
-         << booking.getSeatNumber() << '|'
-         << booking.getFare() << '|'
-         << booking.getJourneyDate() << '|'
-         << booking.getStatus()
-         << '\n';
-
-    file.close();
+    file << '\n';
 
     return true;
 }
+
 
 vector<Booking> FileManager::loadBookings(
-    const string& filename) {
+    const string& filename
+) {
 
-    vector<Booking> loadedBookings;
+    vector<Booking> bookings;
 
     ifstream file(filename);
 
     if (!file.is_open()) {
-        return loadedBookings;
+        return bookings;
     }
 
     string line;
@@ -66,64 +79,173 @@ vector<Booking> FileManager::loadBookings(
             continue;
         }
 
+        vector<string> fields;
+        string field;
+
         stringstream ss(line);
 
-        string pnr;
-        string trainNumber;
-        string coachNumber;
-        string name;
-        string age;
-        string gender;
-        string phone;
-        string seatNumber;
-        string fare;
-        string journeyDate;
-        string status;
-
-        getline(ss, pnr, '|');
-        getline(ss, trainNumber, '|');
-        getline(ss, coachNumber, '|');
-        getline(ss, name, '|');
-        getline(ss, age, '|');
-        getline(ss, gender, '|');
-        getline(ss, phone, '|');
-        getline(ss, seatNumber, '|');
-        getline(ss, fare, '|');
-        getline(ss, journeyDate, '|');
-        getline(ss, status, '|');
-
-        Passenger passenger(
-            name,
-            stoi(age),
-            gender[0],
-            phone
-        );
-
-        Booking booking(
-            pnr,
-            stoi(trainNumber),
-            stoi(coachNumber),
-            passenger,
-            stoi(seatNumber),
-            stod(fare),
-            journeyDate
-        );
-
-        if (status == "Cancelled") {
-            booking.cancel();
+        while (getline(ss, field, '|')) {
+            fields.push_back(field);
         }
 
-        loadedBookings.push_back(booking);
+
+        if (fields.size() == 11) {
+
+            try {
+
+                string pnr = fields[0];
+
+                int trainNumber = stoi(fields[1]);
+                int coachNumber = stoi(fields[2]);
+
+                string name = fields[3];
+                int age = stoi(fields[4]);
+
+                char gender = fields[5][0];
+
+                string phone = fields[6];
+
+                int seatNumber = stoi(fields[7]);
+                double fare = stod(fields[8]);
+
+                string journeyDate = fields[9];
+                string status = fields[10];
+
+                Passenger passenger(
+                    name,
+                    age,
+                    gender,
+                    phone
+                );
+
+                Ticket ticket(
+                    passenger,
+                    coachNumber,
+                    seatNumber,
+                    fare
+                );
+
+                Booking booking(
+                    pnr,
+                    trainNumber,
+                    journeyDate
+                );
+
+                booking.addTicket(ticket);
+
+                if (status == "Cancelled") {
+                    booking.cancel();
+                }
+
+                bookings.push_back(booking);
+
+            }
+            catch (...) {
+
+                cerr << "Warning: Invalid old booking record skipped.\n";
+            }
+
+            continue;
+        }
+
+
+        if (fields.size() < 5) {
+            cerr << "Warning: Invalid booking record skipped.\n";
+            continue;
+        }
+
+        try {
+
+            string pnr = fields[0];
+
+            int trainNumber = stoi(fields[1]);
+
+            string journeyDate = fields[2];
+
+            string status = fields[3];
+
+            int ticketCount = stoi(fields[4]);
+
+
+            int expectedFields = 5 + ticketCount * 7;
+
+            if (ticketCount < 1 ||
+                ticketCount > 5 ||
+                static_cast<int>(fields.size()) != expectedFields) {
+
+                cerr << "Warning: Invalid ticket count in booking "
+                     << pnr << ".\n";
+
+                continue;
+            }
+
+
+            Booking booking(
+                pnr,
+                trainNumber,
+                journeyDate
+            );
+
+
+            int index = 5;
+
+            for (int i = 0; i < ticketCount; i++) {
+
+                string name = fields[index++];
+                int age = stoi(fields[index++]);
+
+                char gender = fields[index++][0];
+
+                string phone = fields[index++];
+
+                int coachNumber = stoi(fields[index++]);
+                int seatNumber = stoi(fields[index++]);
+
+                double fare = stod(fields[index++]);
+
+
+                Passenger passenger(
+                    name,
+                    age,
+                    gender,
+                    phone
+                );
+
+
+                Ticket ticket(
+                    passenger,
+                    coachNumber,
+                    seatNumber,
+                    fare
+                );
+
+
+                booking.addTicket(ticket);
+            }
+
+
+            if (status == "Cancelled") {
+                booking.cancel();
+            }
+
+
+            bookings.push_back(booking);
+
+        }
+        catch (...) {
+
+            cerr << "Warning: Invalid booking record skipped.\n";
+        }
     }
 
-    file.close();
-
-    return loadedBookings;
+    return bookings;
 }
+
 
 bool FileManager::saveAllBookings(
     const vector<Booking>& bookings,
-    const string& filename) {
+    const string& filename
+) {
 
     ofstream file(filename);
 
@@ -131,25 +253,34 @@ bool FileManager::saveAllBookings(
         return false;
     }
 
+
     for (const Booking& booking : bookings) {
 
-        const Passenger& passenger = booking.getPassenger();
+        file << booking.getPNR() << '|';
+        file << booking.getTrainNumber() << '|';
+        file << booking.getJourneyDate() << '|';
+        file << booking.getStatus() << '|';
+        file << booking.getTotalPassengers();
 
-        file << booking.getPNR() << '|'
-             << booking.getTrainNumber() << '|'
-             << booking.getCoachNumber() << '|'
-             << passenger.getName() << '|'
-             << passenger.getAge() << '|'
-             << passenger.getGender() << '|'
-             << passenger.getPhone() << '|'
-             << booking.getSeatNumber() << '|'
-             << booking.getFare() << '|'
-             << booking.getJourneyDate() << '|'
-             << booking.getStatus()
-             << '\n';
+
+        for (const Ticket& ticket : booking.getTickets()) {
+
+            const Passenger& passenger =
+                ticket.getPassenger();
+
+            file << '|'
+                 << passenger.getName() << '|'
+                 << passenger.getAge() << '|'
+                 << passenger.getGender() << '|'
+                 << passenger.getPhone() << '|'
+                 << ticket.getCoachNumber() << '|'
+                 << ticket.getSeatNumber() << '|'
+                 << ticket.getFare();
+        }
+
+        file << '\n';
     }
 
-    file.close();
 
     return true;
 }

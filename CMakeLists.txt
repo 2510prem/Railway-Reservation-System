@@ -18,6 +18,7 @@ add_executable(RailwayReservation
     src/RailwaySystem.cpp
     src/FareCalculator.cpp
     src/FileManager.cpp
+    src/Ticket.cpp
 )
 
 target_include_directories(RailwayReservation PRIVATE include)

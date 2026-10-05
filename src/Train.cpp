@@ -137,3 +137,7 @@ string Train::getTrainName() const {
 bool Train::runsDaily() const {
     return true;
 }
+
+const vector<Coach>& Train::getCoaches() const {
+    return coaches;
+}

@@ -1,6 +1,7 @@
 #include "RailwaySystem.h"
 #include "FareCalculator.h"
 #include "FileManager.h"
+#include "Ticket.h"
 
 #include <iostream>
 #include <cctype>
@@ -212,15 +213,12 @@ void RailwaySystem::bookTicket() {
     cout << "\nEnter train number: ";
     cin >> trainNumber;
 
-
     Train* train = findTrain(trainNumber);
 
     if (train == nullptr) {
-
         cout << "\nTrain not found.\n";
         return;
     }
-
 
     string journeyDate;
 
@@ -228,132 +226,160 @@ void RailwaySystem::bookTicket() {
     cin >> journeyDate;
 
     if (!isValidDate(journeyDate)) {
-
         cout << "\nInvalid journey date.\n";
         return;
     }
 
-
     if (!train->runsDaily()) {
-
         cout << "\nTrain does not operate on this date.\n";
         return;
     }
 
+    int numberOfTickets;
+
+    cout << "\nEnter number of tickets (1-5): ";
+    cin >> numberOfTickets;
+
+    if (numberOfTickets < 1 || numberOfTickets > 5) {
+        cout << "\nYou can book a maximum of 5 tickets at once.\n";
+        return;
+    }
 
     train->displaySeats();
 
+    vector<Ticket> selectedTickets;
 
-    int coachNumber;
-    int seatNumber;
+    for (int i = 1; i <= numberOfTickets; i++) {
 
-    cout << "\nEnter coach number: ";
-    cin >> coachNumber;
+        cout << "\n========================================\n";
+        cout << "          PASSENGER " << i << '\n';
+        cout << "========================================\n";
 
-    Coach* coach = train->findCoach(coachNumber);
+        int coachNumber;
+        int seatNumber;
 
-    if (coach == nullptr) {
+        cout << "\nEnter coach number: ";
+        cin >> coachNumber;
 
-        cout << "\nCoach not found.\n";
-        return;
-    }
+        Coach* coach = train->findCoach(coachNumber);
 
+        if (coach == nullptr) {
+            cout << "\nCoach not found.\n";
+            return;
+        }
 
-    cout << "\nCoach selected: "
-         << coach->getCoachNumber()
-         << '\n';
+        coach->display();
 
-    coach->display();
+        cout << "\nEnter seat number: ";
+        cin >> seatNumber;
 
+        Seat* seat = coach->findSeat(seatNumber);
 
+        if (seat == nullptr) {
+            cout << "\nSeat not found.\n";
+            return;
+        }
 
-    cout << "\nEnter seat number: ";
-    cin >> seatNumber;
+        if (isSeatBooked(
+                trainNumber,
+                coachNumber,
+                seatNumber,
+                journeyDate)) {
 
-    Seat* seat = coach->findSeat(seatNumber);
+            cout << "\nSeat "
+                 << seatNumber
+                 << " in Coach "
+                 << coachNumber
+                 << " is already booked for this date.\n";
 
-    if (seat == nullptr) {
+            return;
+        }
 
-        cout << "\nSeat not found.\n";
-        return;
-    }
+        bool alreadySelected = false;
 
-    if (isSeatBooked(
-            trainNumber,
-            coachNumber,
-            seatNumber,
-            journeyDate)) {
+        for (const Ticket& ticket : selectedTickets) {
 
-        cout << "\nThis seat is already booked for this journey date.\n";
-        return;
-    }
+            if (ticket.getCoachNumber() == coachNumber &&
+                ticket.getSeatNumber() == seatNumber) {
 
+                alreadySelected = true;
+                break;
+            }
+        }
 
-    double fare = FareCalculator::calculateFare(
-        coach->getCoachType()
-    );
+        if (alreadySelected) {
 
+            cout << "\nYou have already selected this seat "
+                 << "for another passenger.\n";
 
-    string name;
-    int age;
-    char gender;
-    string phone;
+            return;
+        }
 
+        string name;
+        int age;
+        char gender;
+        string phone;
 
-    cout << "\nEnter passenger name: ";
+        cout << "\nEnter passenger name: ";
 
-    cin.ignore();
-    getline(cin, name);
+        cin.ignore();
+        getline(cin, name);
 
+        cout << "Enter age: ";
+        cin >> age;
 
-    cout << "Enter age: ";
-    cin >> age;
+        if (age < 1 || age > 120) {
+            cout << "\nInvalid age.\n";
+            return;
+        }
 
-    if (age < 1 || age > 120) {
+        cout << "Enter gender (M/F/O): ";
+        cin >> gender;
 
-        cout << "\nInvalid age.\n";
-        return;
-    }
+        if (gender != 'M' &&
+            gender != 'F' &&
+            gender != 'O') {
 
+            cout << "\nInvalid gender.\n";
+            return;
+        }
 
-    cout << "Enter gender (M/F/O): ";
-    cin >> gender;
+        cout << "Enter phone number: ";
+        cin >> phone;
 
-    if (gender != 'M' &&
-        gender != 'F' &&
-        gender != 'O') {
-
-        cout << "\nInvalid gender.\n";
-        return;
-    }
-
-
-    cout << "Enter phone number: ";
-    cin >> phone;
-
-    if (phone.length() != 10) {
-
-        cout << "\nInvalid phone number.\n";
-        return;
-    }
-
-
-    for (char ch : phone) {
-
-        if (!isdigit(ch)) {
-
+        if (phone.length() != 10) {
             cout << "\nInvalid phone number.\n";
             return;
         }
+
+        for (char ch : phone) {
+
+            if (!isdigit(ch)) {
+                cout << "\nInvalid phone number.\n";
+                return;
+            }
+        }
+
+        Passenger passenger(
+            name,
+            age,
+            gender,
+            phone
+        );
+
+        double fare = FareCalculator::calculateFare(
+            coach->getCoachType()
+        );
+
+        Ticket ticket(
+            passenger,
+            coachNumber,
+            seatNumber,
+            fare
+        );
+
+        selectedTickets.push_back(ticket);
     }
-
-
-    Passenger passenger(
-        name,
-        age,
-        gender,
-        phone
-    );
 
 
     string pnr;
@@ -361,7 +387,6 @@ void RailwaySystem::bookTicket() {
     do {
 
         pnr = "PNR" + to_string(nextPNR);
-
         nextPNR++;
 
     } while (isPNRExists(pnr));
@@ -370,16 +395,14 @@ void RailwaySystem::bookTicket() {
     Booking booking(
         pnr,
         trainNumber,
-        coachNumber,
-        passenger,
-        seat->getSeatNumber(),
-        fare,
         journeyDate
     );
 
+    for (const Ticket& ticket : selectedTickets) {
+        booking.addTicket(ticket);
+    }
 
     bookings.push_back(booking);
-
 
     if (!FileManager::saveBooking(
             booking,
@@ -388,8 +411,9 @@ void RailwaySystem::bookTicket() {
         cout << "\nWarning: Booking could not be saved to file.\n";
     }
 
-
-    cout << "\nTicket booked successfully!\n";
+    cout << "\n========================================\n";
+    cout << "       TICKETS BOOKED SUCCESSFULLY!\n";
+    cout << "========================================\n";
 
     booking.display();
 }
@@ -483,7 +507,63 @@ void RailwaySystem::displaySeats() {
     }
 
 
-    train->displaySeats();
+    string journeyDate;
+
+    cout << "Enter journey date (DD/MM/YYYY): ";
+    cin >> journeyDate;
+
+
+    if (!isValidDate(journeyDate)) {
+
+        cout << "\nInvalid journey date.\n";
+        return;
+    }
+
+
+    cout << "\n========== SEAT AVAILABILITY ==========\n";
+
+    cout << "Train : "
+         << train->getTrainNumber()
+         << " - "
+         << train->getTrainName()
+         << '\n';
+
+    cout << "Journey Date : "
+         << journeyDate
+         << "\n";
+
+
+    for (const Coach& coach : train->getCoaches()) {
+
+        cout << "\nCoach "
+             << coach.getCoachNumber()
+             << " - "
+             << coach.getCoachType()
+             << '\n';
+
+
+        for (int seatNumber = 1;
+             seatNumber <= coach.getTotalSeats();
+             seatNumber++) {
+
+            bool booked = isSeatBooked(
+                trainNumber,
+                coach.getCoachNumber(),
+                seatNumber,
+                journeyDate
+            );
+
+
+            cout << "Seat "
+                 << seatNumber
+                 << " - "
+                 << (booked ? "Booked" : "Available")
+                 << '\n';
+        }
+    }
+
+
+    cout << "=======================================\n";
 }
 
 
@@ -716,16 +796,22 @@ bool RailwaySystem::isSeatBooked(
 
     for (const Booking& booking : bookings) {
 
-        if (booking.getTrainNumber() == trainNumber &&
-            booking.getCoachNumber() == coachNumber &&
-            booking.getSeatNumber() == seatNumber &&
-            booking.getJourneyDate() == journeyDate &&
-            booking.getStatus() != "Cancelled") {
+        if (booking.getTrainNumber() != trainNumber ||
+            booking.getJourneyDate() != journeyDate ||
+            booking.getStatus() == "Cancelled") {
 
-            return true;
+            continue;
+        }
+
+        for (const Ticket& ticket : booking.getTickets()) {
+
+            if (ticket.getCoachNumber() == coachNumber &&
+                ticket.getSeatNumber() == seatNumber) {
+
+                return true;
+            }
         }
     }
-
 
     return false;
 }
