@@ -14,9 +14,9 @@ add_executable(RailwayReservation
     src/Passenger.cpp
     src/Booking.cpp
     src/Coach.cpp
+    src/CoachTypes.cpp
     src/Seat.cpp
     src/RailwaySystem.cpp
-    src/FareCalculator.cpp
     src/FileManager.cpp
     src/Ticket.cpp
 )

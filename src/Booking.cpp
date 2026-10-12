@@ -10,8 +10,7 @@ Booking::Booking(
 )
     : pnr(pnr),
       trainNumber(trainNumber),
-      journeyDate(journeyDate),
-      status("Confirmed") {
+      journeyDate(journeyDate) {
 }
 
 void Booking::addTicket(const Ticket& ticket) {
@@ -32,8 +31,26 @@ const string& Booking::getJourneyDate() const {
     return journeyDate;
 }
 
-const string& Booking::getStatus() const {
-    return status;
+string Booking::getStatus() const {
+
+    bool anyWaiting = false;
+
+    for (const Ticket& ticket : tickets) {
+
+        if (ticket.isConfirmed()) {
+            return "Confirmed";
+        }
+
+        if (ticket.isWaiting()) {
+            anyWaiting = true;
+        }
+    }
+
+    if (anyWaiting) {
+        return "Waiting";
+    }
+
+    return "Cancelled";
 }
 
 const vector<Ticket>& Booking::getTickets() const {
@@ -49,14 +66,47 @@ double Booking::getTotalFare() const {
     double total = 0;
 
     for (const Ticket& ticket : tickets) {
-        total += ticket.getFare();
+
+        if (!ticket.isCancelled()) {
+            total += ticket.getFare();
+        }
     }
 
     return total;
 }
 
 void Booking::cancel() {
-    status = "Cancelled";
+
+    for (Ticket& ticket : tickets) {
+        ticket.cancel();
+    }
+}
+
+// tickets.at(i) is like tickets[i], but it checks the position and
+// throws std::out_of_range if it is not valid.
+void Booking::cancelTicket(int ticketIndex) {
+    tickets.at(ticketIndex).cancel();
+}
+
+void Booking::confirmTicket(int ticketIndex, int seatNumber) {
+    tickets.at(ticketIndex).confirm(seatNumber);
+}
+
+string Booking::serialize() const {
+
+    string text = pnr + '|'
+                + to_string(trainNumber) + '|'
+                + journeyDate + '|'
+                + getStatus() + '|'
+                + to_string(tickets.size());
+
+    // Each Ticket knows how to serialize itself, so Booking
+    // only has to join the pieces together.
+    for (const Ticket& ticket : tickets) {
+        text += '|' + ticket.serialize();
+    }
+
+    return text;
 }
 
 void Booking::display() const {
@@ -68,7 +118,7 @@ void Booking::display() const {
     cout << "PNR            : " << pnr << '\n';
     cout << "Train Number   : " << trainNumber << '\n';
     cout << "Journey Date   : " << journeyDate << '\n';
-    cout << "Status         : " << status << '\n';
+    cout << "Status         : " << getStatus() << '\n';
     cout << "Passengers     : " << tickets.size() << '\n';
 
     cout << "\n----------------------------------------\n";

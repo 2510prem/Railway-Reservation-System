@@ -1,5 +1,6 @@
 #include "Ticket.h"
 #include <iostream>
+#include <sstream>
 
 using namespace std;
 
@@ -7,12 +8,14 @@ Ticket::Ticket(
     const Passenger& passenger,
     int coachNumber,
     int seatNumber,
-    double fare
+    double fare,
+    const string& status
 )
     : passenger(passenger),
       coachNumber(coachNumber),
       seatNumber(seatNumber),
-      fare(fare) {
+      fare(fare),
+      status(status) {
 }
 
 const Passenger& Ticket::getPassenger() const {
@@ -29,6 +32,49 @@ int Ticket::getSeatNumber() const {
 
 double Ticket::getFare() const {
     return fare;
+}
+
+const string& Ticket::getStatus() const {
+    return status;
+}
+
+bool Ticket::isConfirmed() const {
+    return status == "Confirmed";
+}
+
+bool Ticket::isWaiting() const {
+    return status == "Waiting";
+}
+
+bool Ticket::isCancelled() const {
+    return status == "Cancelled";
+}
+
+void Ticket::cancel() {
+    status = "Cancelled";
+}
+
+void Ticket::confirm(int seatNumber) {
+
+    this->seatNumber = seatNumber;
+
+    status = "Confirmed";
+}
+
+string Ticket::serialize() const {
+
+    ostringstream text;
+
+    text << passenger.getName() << '|'
+         << passenger.getAge() << '|'
+         << passenger.getGender() << '|'
+         << passenger.getPhone() << '|'
+         << coachNumber << '|'
+         << seatNumber << '|'
+         << fare << '|'
+         << status;
+
+    return text.str();
 }
 
 void Ticket::display() const {
@@ -48,8 +94,17 @@ void Ticket::display() const {
     cout << "\nCoach     : "
          << coachNumber;
 
-    cout << "\nSeat      : "
-         << seatNumber;
+    // A waiting passenger has no seat yet
+    if (seatNumber == 0) {
+        cout << "\nSeat      : Not allotted";
+    }
+
+    else {
+        cout << "\nSeat      : " << seatNumber;
+    }
+
+    cout << "\nStatus    : "
+         << status;
 
     cout << "\nFare      : ₹"
          << fare << '\n';

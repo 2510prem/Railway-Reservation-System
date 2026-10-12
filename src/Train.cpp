@@ -19,6 +19,63 @@ Train::Train(int trainNumber,
     this->arrivalTime = arrivalTime;
 }
 
+// Destructor: frees every coach that was created with "new".
+// [OOP: Virtual destructor]
+// "delete coach" is called on a Coach*. Because the Coach destructor
+// is virtual, the destructor of the real sub class runs.
+Train::~Train() {
+
+    for (Coach* coach : coaches) {
+        delete coach;
+    }
+}
+
+// Copy constructor: builds a new train as a copy of another one.
+// [OOP: Subtype polymorphism]
+// coach->clone() is a virtual call. The train does not know (or need
+// to know) which sub class each coach is; every coach copies itself.
+Train::Train(const Train& other)
+    : Displayable(other),
+      trainNumber(other.trainNumber),
+      trainName(other.trainName),
+      source(other.source),
+      destination(other.destination),
+      departureTime(other.departureTime),
+      arrivalTime(other.arrivalTime) {
+
+    for (const Coach* coach : other.coaches) {
+        coaches.push_back(coach->clone());
+    }
+}
+
+// Assignment operator: makes an existing train a copy of another one.
+Train& Train::operator=(const Train& other) {
+
+    // Guard against "train = train;"
+    if (this != &other) {
+
+        // Release the coaches this train currently owns
+        for (Coach* coach : coaches) {
+            delete coach;
+        }
+
+        coaches.clear();
+
+        trainNumber = other.trainNumber;
+        trainName = other.trainName;
+        source = other.source;
+        destination = other.destination;
+        departureTime = other.departureTime;
+        arrivalTime = other.arrivalTime;
+
+        for (const Coach* coach : other.coaches) {
+            coaches.push_back(coach->clone());
+        }
+    }
+
+    return *this;
+}
+
 void Train::display() const {
 
     cout << "Train Number   : " << trainNumber << '\n';
@@ -30,18 +87,17 @@ void Train::display() const {
     cout << "Arrival        : " << arrivalTime << '\n';
 
     cout << "Total Seats    : " << getTotalSeats() << '\n';
-    cout << "Available Seats: " << getAvailableSeats() << '\n';
 
     cout << "\nCoaches:\n";
 
-    for (const Coach& coach : coaches) {
+    for (const Coach* coach : coaches) {
 
         cout << "  Coach "
-             << coach.getCoachNumber()
+             << coach->getCoachNumber()
              << " - "
-             << coach.getCoachType()
-             << " - Available Seats: "
-             << coach.getAvailableSeats()
+             << coach->getCoachType()
+             << " - Seats: "
+             << coach->getTotalSeats()
              << '\n';
     }
 
@@ -60,55 +116,12 @@ string Train::getDestination() const {
     return destination;
 }
 
-int Train::getAvailableSeats() const {
+const Coach* Train::findCoach(int coachNumber) const {
 
-    int count = 0;
+    for (const Coach* coach : coaches) {
 
-    for (const Coach& coach : coaches) {
-        count += coach.getAvailableSeats();
-    }
-
-    return count;
-}
-
-void Train::displaySeats() const {
-
-    cout << "\n========== SEAT AVAILABILITY ==========\n";
-
-    for (const Coach& coach : coaches) {
-
-        cout << "\nCoach "
-             << coach.getCoachNumber()
-             << " (" << coach.getCoachType() << ")\n";
-
-        cout << "Available Seats: "
-             << coach.getAvailableSeats()
-             << "\n";
-
-        coach.display();
-    }
-}
-
-Seat* Train::findSeat(int seatNumber) {
-
-    for (Coach& coach : coaches) {
-
-        Seat* seat = coach.findSeat(seatNumber);
-
-        if (seat != nullptr) {
-            return seat;
-        }
-    }
-
-    return nullptr;
-}
-
-Coach* Train::findCoach(int coachNumber) {
-
-    for (Coach& coach : coaches) {
-
-        if (coach.getCoachNumber() == coachNumber) {
-            return &coach;
+        if (coach->getCoachNumber() == coachNumber) {
+            return coach;
         }
     }
 
@@ -119,14 +132,14 @@ int Train::getTotalSeats() const {
 
     int count = 0;
 
-    for (const Coach& coach : coaches) {
-        count += coach.getTotalSeats();
+    for (const Coach* coach : coaches) {
+        count += coach->getTotalSeats();
     }
 
     return count;
 }
 
-void Train::addCoach(const Coach& coach) {
+void Train::addCoach(Coach* coach) {
     coaches.push_back(coach);
 }
 
@@ -138,6 +151,6 @@ bool Train::runsDaily() const {
     return true;
 }
 
-const vector<Coach>& Train::getCoaches() const {
+const vector<Coach*>& Train::getCoaches() const {
     return coaches;
 }

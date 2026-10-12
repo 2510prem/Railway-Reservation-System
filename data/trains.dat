@@ -1,0 +1,18 @@
+# Train data for the Railway Reservation System.
+# One train per line. Lines starting with '#' are ignored.
+#
+# Format:
+# TrainNumber|Name|Source|Destination|Departure|Arrival|CoachCount|CoachNumber|CoachType|Seats|...
+#
+# CoachNumber|CoachType|Seats is repeated CoachCount times.
+# CoachType must be one of: Sleeper, AC 3 Tier, AC 2 Tier, First AC
+12301|Rajdhani Express|New Delhi|Mumbai|16:55|08:35|2|1|AC 2 Tier|6|2|First AC|6
+12302|Shatabdi Express|New Delhi|Bhopal|06:00|14:00|2|1|AC 3 Tier|6|2|AC 3 Tier|6
+12303|Intercity Express|Dhanbad|Ranchi|07:30|11:00|2|1|Sleeper|6|2|Sleeper|6
+12304|Duronto Express|Howrah|New Delhi|08:35|06:00|3|1|Sleeper|8|2|AC 3 Tier|6|3|AC 2 Tier|6
+12305|Garib Rath Express|Patna|Kolkata|20:10|05:45|2|1|AC 3 Tier|8|2|AC 3 Tier|8
+12306|Tejas Express|Mumbai|Goa|05:50|14:40|2|1|AC 2 Tier|6|2|First AC|4
+12307|Humsafar Express|Bengaluru|Chennai|13:30|19:45|3|1|AC 3 Tier|6|2|AC 3 Tier|6|3|AC 3 Tier|6
+12308|Vande Bharat Express|New Delhi|Varanasi|06:00|14:00|2|1|AC 2 Tier|8|2|First AC|4
+12309|Deccan Queen|Pune|Mumbai|07:15|10:25|3|1|Sleeper|8|2|Sleeper|8|3|AC 3 Tier|6
+12310|Coromandel Express|Howrah|Chennai|15:20|16:50|4|1|Sleeper|8|2|Sleeper|8|3|AC 3 Tier|6|4|AC 2 Tier|6
